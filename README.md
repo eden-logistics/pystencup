@@ -2,16 +2,25 @@
 
 A flutter app for steganography
 
-## Getting Started
+If you're reading this, sorry for the mess.
 
-This project is a starting point for a Flutter application.
+(Everything's built off the default flutter app template with a lot of comments)
 
-A few resources to get you started if this is your first Flutter project:
+## Info
+- The main frontend code is under lib/main.dart.
+- Dependencies are under pubspec.yaml.
+- python code is under app/src
+  - if you change the python code, be sure to run `dart run serious_python:main package app/src -p Android` before building (packages the python code to be run in the app)
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## To Build
+You'll need
+- Flutter
+- Android phone OR emulator
+- Probably android studio (which you'll need for the emulator anyway)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+For an actual android phone plugged in via USB:
+- Download flutter on your PC
+- On your phone go to settings > system info > find the build number setting and tap it 7 times
+  - (yes that's real and it will enable developer mode)
+- plug your phone into your pc and run `flutter devices` and make sure you can see your phone on there
+- run `flutter run -d [name of device]` and wait for it to build
