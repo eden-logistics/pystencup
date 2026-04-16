@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Steganography Tool',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
       home: const MyHomePage(title: 'Steganography Tool'),
     );
@@ -91,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _downloadFile() async {
     final result = await SaverGallery.saveFile(
-      filePath: "$_downloadDir/outputImage.png",
+      filePath: _image!.path,
       fileName: "outputImage.png",
       skipIfExists: false,
     );
