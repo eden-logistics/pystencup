@@ -1,8 +1,11 @@
+// ALWAYS PULL BEFORE YOU PUSH
+
 import 'package:flutter/material.dart';
 import 'package:serious_python/serious_python.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:saver_gallery/saver_gallery.dart';
 
 void main() {
   runApp(const MyApp());
@@ -54,12 +57,15 @@ class _MyHomePageState extends State<MyHomePage> {
     if (_image == null) {
       throw (Stream.error("No image to make look like crap!"));
     }
-
+    // directory where the image is / where the output is saved
     final imageDir = _image!.parent;
+
+    // run the python file
     await SeriousPython.run(
-      "app/app.zip",
-      appFileName: "ImagePreview.py",
+      "app/app.zip", // directory where the app is
+      appFileName: "ImagePreview.py", // python file to run
       environmentVariables: {
+        // info to be passed to python
         "INPUT_IMAGE_FILEPATH": _image!.path,
         "OUTPUT_IMAGE_FILEPATH": imageDir.path,
         "OUTPUT_IMAGE_NAME": "outputImage.png",
@@ -70,8 +76,25 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
+  void _showToast(BuildContext context) {
+    final scaffold = ScaffoldMessenger.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: const Text("File saved to gallery"),
+        action: SnackBarAction(
+          label: 'Close',
+          onPressed: scaffold.hideCurrentSnackBar,
+        ),
+      ),
+    );
+  }
+
   void _downloadFile() async {
-    _image!.copy("${_downloadDir}/outputImage.png");
+    final result = await SaverGallery.saveFile(
+      filePath: "$_downloadDir/outputImage.png",
+      fileName: "outputImage.png",
+      skipIfExists: false,
+    );
   }
 
   @override
@@ -88,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             ElevatedButton(
               onPressed: _genPreview,
-              child: Text("Press to try python!"),
+              child: Text("Generate Preview"),
             ),
             _image == null
                 ? Text("Please upload an image")
@@ -106,7 +129,7 @@ class _MyHomePageState extends State<MyHomePage> {
           _pickImage();
         },
         tooltip: 'Increment',
-        child: const Icon(Icons.camera),
+        child: const Icon(Icons.camera_alt),
       ),
     );
   }

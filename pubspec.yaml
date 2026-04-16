@@ -45,6 +45,9 @@ dependencies:
   # used for getting the download folder
   path_provider: ^2.1.5
 
+  # used for saving images to the gallery
+  saver_gallery: ^4.1.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
