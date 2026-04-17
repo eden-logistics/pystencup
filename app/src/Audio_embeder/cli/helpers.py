@@ -1,5 +1,4 @@
 from utils.logging_util import setup_logger
-from cli.config import ALGORITHMS
 
 logger = setup_logger(__name__)
 
@@ -37,9 +36,3 @@ def get_path_with_default(default_path, label):
     file_path = input(f"Enter the path to the {label}: ").strip()
     logger.info(f"User entered custom path for {label}: {file_path}")
     return file_path
-
-
-def display_algorithm_menu():
-    """Displays the algorithm selection menu based on the ALGORITHMS dictionary."""
-    options = [algo["name"] for algo in ALGORITHMS.values()]
-    display_menu(options, "Select an algorithm")

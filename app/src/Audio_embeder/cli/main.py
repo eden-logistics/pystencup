@@ -1,76 +1,31 @@
 import os
 import sys
-from tqdm import tqdm
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(project_root)
 
+from tqdm import tqdm
 from utils.logging_util import setup_logger
-from cli.helpers import display_menu, get_user_choice, get_path_with_default, display_algorithm_menu
-from cli.config import ALGORITHMS
+from cli.helpers import display_menu, get_user_choice, get_path_with_default
+from cli.config import CONFIG
 
 logger = setup_logger(__name__)
 
+def handle_encode(config, input_file, output_file, secret_audio_file):
+    logger.info(f"Encoding using {config['name']}")
 
-def handle_algorithm_choice(encode=True):
-    """Handles the user's choice of algorithm for encoding or decoding."""
-    display_algorithm_menu()
+    encoded_path = config["encode"](input_file, output_file, secret_audio_file)
 
-    algo_choice = get_user_choice(len(ALGORITHMS))
-    if algo_choice is None or algo_choice not in ALGORITHMS:
-        logger.warning("Invalid algorithm choice.")
-        print("\nInvalid algorithm choice!")
-        return
-
-    algorithm = ALGORITHMS[algo_choice]
-
-    if encode:
-        input_file = get_path_with_default(
-            algorithm["default_input_file"],
-            "carrier image file"
-        )
-        secret_audio_file = get_path_with_default(
-            algorithm["default_secret_file"],
-            "secret audio file"
-        )
-        output_file = get_path_with_default(
-            algorithm["default_output_file"],
-            "output encoded image file"
-        )
-        handle_encode(algorithm, input_file, output_file, secret_audio_file)
+    if encoded_path:
+        print(f"\nEncoded image saved to: {encoded_path}")
     else:
-        encoded_image_file = get_path_with_default(
-            algorithm["default_output_file"],
-            "encoded image file"
-        )
-        output_audio_file = get_path_with_default(
-            algorithm["default_decoded_file"],
-            "output extracted audio file"
-        )
-        handle_decode(algorithm, encoded_image_file, output_audio_file)
+        print("\nEncoding failed.")
 
 
-def handle_encode(algorithm, input_file, output_file, secret_audio_file):
-    """Encodes an audio file into an image using the chosen algorithm."""
-    logger.info(
-        f"Encoding using {algorithm['name']}. Output file will be: {output_file}"
-    )
+def handle_decode(config, encoded_image_file, output_audio_file):
+    logger.info(f"Decoding using {config['name']}")
 
-    for _ in tqdm(range(1), desc="Encoding Progress"):
-        algorithm["encode"](input_file, output_file, secret_audio_file)
-
-    print(f"\nEncoded image saved to: {output_file}")
-
-
-def handle_decode(algorithm, encoded_image_file, output_audio_file):
-    """Decodes hidden audio from an image using the chosen algorithm."""
-    logger.info(
-        f"Decoding using {algorithm['name']} from file: {encoded_image_file}"
-    )
-
-    decoded_path = None
-    for _ in tqdm(range(1), desc="Decoding Progress"):
-        decoded_path = algorithm["decode"](encoded_image_file, output_audio_file)
+    decoded_path = config["decode"](encoded_image_file, output_audio_file)
 
     if decoded_path:
         print(f"\nExtracted audio saved to: {decoded_path}")
@@ -83,12 +38,39 @@ def handle_main_choice(choice):
     logger.info(f"User selected main menu choice: {choice}")
 
     if choice == 1:
-        handle_algorithm_choice(encode=True)
+        # ENCODE
+        input_file = get_path_with_default(
+            CONFIG["default_input_file"],
+            "carrier image file"
+        )
+        secret_audio_file = get_path_with_default(
+            CONFIG["default_secret_file"],
+            "secret audio file"
+        )
+        output_file = get_path_with_default(
+            CONFIG["default_output_file"],
+            "output encoded image file"
+        )
+
+        handle_encode(CONFIG, input_file, output_file, secret_audio_file)
+
     elif choice == 2:
-        handle_algorithm_choice(encode=False)
+        # DECODE
+        encoded_image_file = get_path_with_default(
+            CONFIG["default_output_file"],
+            "encoded image file"
+        )
+        output_audio_file = get_path_with_default(
+            CONFIG["default_decoded_file"],
+            "output extracted audio file"
+        )
+
+        handle_decode(CONFIG, encoded_image_file, output_audio_file)
+
     elif choice == 3:
         logger.info("Exiting the program.")
         sys.exit(0)
+
     else:
         logger.warning("Invalid choice entered by user.")
         print("\nEnter a valid choice!")
