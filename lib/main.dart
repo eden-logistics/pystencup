@@ -87,7 +87,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Steganography Tool',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const MyHomePage(title: 'Steganography Tool'),
+      home: const MyHomePage(title: 'Image > Image Encoding'),
     );
   }
 }
@@ -106,33 +106,25 @@ class _MyHomePageState extends State<MyHomePage> {
   File? _image;
   File? _secretImage;
   File? _publicImage;
+  File? _finalImage;
   final _picker = ImagePicker();
 
   // function to select secret image
   void _pickSecret() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      _secretImage = File(pickedFile.path);
-      setState(() {});
-    }
+    _secretImage = await _pickImage();
+    setState(() {});
   }
 
   // function to select public image
   void _pickPublic() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      _publicImage = File(pickedFile.path);
-      setState(() {});
-    }
+    _publicImage = await _pickImage();
+    setState(() {});
   }
 
   // helper function for picking an image
-  void _pickImage() async {
+  Future<File> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      _image = File(pickedFile.path);
-      setState(() {});
-    }
+    return File(pickedFile!.path);
   }
 
   void _genImage(BuildContext context) async {
@@ -148,8 +140,13 @@ class _MyHomePageState extends State<MyHomePage> {
         pubObject.height != secObject.height) {
       _showToast(context, "Error: Images must be the same resolution");
     } else {
-      // run the python script
-      // await SeriousPython.run();
+      // run the encode python script
+      // the encoded file will always be saved with the same name as the PUBLIC file, with "_pysten" appended
+      // the decoded file will always be saved with the same name as the input file, with "_decode" appended
+      await SeriousPython.run(
+        "app/app.zip",
+        appFileName:
+      );
     }
   }
 
