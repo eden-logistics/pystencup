@@ -380,3 +380,335 @@ class _ImageDecodePageState extends State<ImageDecodePage> {
     );
   }
 }
+
+// ---------------------------
+// AUDIO TO IMAGE ENCODE PAGE
+// ---------------------------
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Steganography Tool',
+      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      home: const MyHomePage(title: 'Image > Image Encoding'),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  // image picker vars
+  File? _image;
+  File? _secretImage;
+  File? _publicImage;
+  File? _finalImage;
+  final _picker = ImagePicker();
+
+  // var for removing the generate button while the image is baking
+  var _isGenerating = false;
+
+  // function to select secret image
+  void _pickSecret() async {
+    _secretImage = await _pickImage();
+    setState(() {});
+  }
+
+  // function to select public image
+  void _pickPublic() async {
+    _publicImage = await _pickImage();
+    setState(() {});
+  }
+
+  // helper function for picking an image
+  Future<File> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    return File(pickedFile!.path);
+  }
+
+  void _genImage(BuildContext context) async {
+    // image objects, just using them to check that the resolution is the same
+    final pubObject = await decodeImageFromList(
+      _publicImage!.readAsBytesSync(),
+    );
+    final secObject = await decodeImageFromList(
+      _secretImage!.readAsBytesSync(),
+    );
+    // check that images are the same resolution
+    if (pubObject.width != secObject.width ||
+        pubObject.height != secObject.height) {
+      _showToast(context, "Error: Images must be the same resolution");
+    } else {
+      _isGenerating = true;
+      _finalImage = null;
+      setState(() {});
+      await SeriousPython.run(
+        "app/app.zip",
+        appFileName: "Image_embedder/imagesten.py",
+        environmentVariables: {
+          "PUBLIC_IMAGE_PATH": _publicImage!.path,
+          "SECRET_IMAGE_PATH": _secretImage!.path,
+          "DECODE_IMAGE_PATH": "",
+          "MODE": "e",
+        },
+      );
+      _isGenerating = false;
+      _finalImage = File(
+        "/data/data/com.example.pystencup/files/flet/app/Image_embedder/pysten_output.png",
+      );
+      setState(() {});
+    }
+  }
+
+  void _showToast(BuildContext context, String text) {
+    final scaffold = ScaffoldMessenger.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(text),
+        action: SnackBarAction(
+          label: 'Close',
+          onPressed: scaffold.hideCurrentSnackBar,
+        ),
+      ),
+    );
+  }
+
+  void _downloadFile(context) async {
+    if (_finalImage != null) {
+      final result = await SaverGallery.saveFile(
+        filePath: _finalImage!.path,
+        fileName: "pysten_output.png",
+        skipIfExists: false,
+      );
+      _showToast(context, result.toString());
+      print(_finalImage!.path);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // This method is rerun every time setState is called
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: .center,
+          children: [
+            ElevatedButton(
+              onPressed: _pickSecret,
+              child: _secretImage == null
+                  ? Text("Upload Secret Image")
+                  : Text("Secret Image Selected!"),
+            ),
+            ElevatedButton(
+              onPressed: _pickPublic,
+              child: _publicImage == null
+                  ? Text("Upload Public Image")
+                  : Text("Public Image Selected!"),
+            ),
+            if (_secretImage != null && _publicImage != null && !_isGenerating)
+              ElevatedButton(
+                onPressed: () {
+                  _genImage(context);
+                },
+                child: Text("Generate Image"),
+              ),
+            if (_finalImage != null)
+              ElevatedButton(
+                onPressed: () {
+                  _downloadFile(context);
+                },
+                child: Text("Download Image"),
+              ),
+            SizedBox(height: 25),
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, "/");
+              },
+              child: Text("Return to homescreen"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------
+// AUDIO TO IMAGE DECODE PAGE
+// ---------------------------
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Steganography Tool',
+      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      home: const MyHomePage(title: 'Image > Image Encoding'),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  // image picker vars
+  File? _image;
+  File? _secretImage;
+  File? _publicImage;
+  File? _finalImage;
+  final _picker = ImagePicker();
+
+  // var for removing the generate button while the image is baking
+  var _isGenerating = false;
+
+  // function to select secret image
+  void _pickSecret() async {
+    _secretImage = await _pickImage();
+    setState(() {});
+  }
+
+  // function to select public image
+  void _pickPublic() async {
+    _publicImage = await _pickImage();
+    setState(() {});
+  }
+
+  // helper function for picking an image
+  Future<File> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    return File(pickedFile!.path);
+  }
+
+  void _genImage(BuildContext context) async {
+    // image objects, just using them to check that the resolution is the same
+    final pubObject = await decodeImageFromList(
+      _publicImage!.readAsBytesSync(),
+    );
+    final secObject = await decodeImageFromList(
+      _secretImage!.readAsBytesSync(),
+    );
+    // check that images are the same resolution
+    if (pubObject.width != secObject.width ||
+        pubObject.height != secObject.height) {
+      _showToast(context, "Error: Images must be the same resolution");
+    } else {
+      _isGenerating = true;
+      _finalImage = null;
+      setState(() {});
+      await SeriousPython.run(
+        "app/app.zip",
+        appFileName: "Image_embedder/imagesten.py",
+        environmentVariables: {
+          "PUBLIC_IMAGE_PATH": _publicImage!.path,
+          "SECRET_IMAGE_PATH": _secretImage!.path,
+          "DECODE_IMAGE_PATH": "",
+          "MODE": "e",
+        },
+      );
+      _isGenerating = false;
+      _finalImage = File(
+        "/data/data/com.example.pystencup/files/flet/app/Image_embedder/pysten_output.png",
+      );
+      setState(() {});
+    }
+  }
+
+  void _showToast(BuildContext context, String text) {
+    final scaffold = ScaffoldMessenger.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(text),
+        action: SnackBarAction(
+          label: 'Close',
+          onPressed: scaffold.hideCurrentSnackBar,
+        ),
+      ),
+    );
+  }
+
+  void _downloadFile(context) async {
+    if (_finalImage != null) {
+      final result = await SaverGallery.saveFile(
+        filePath: _finalImage!.path,
+        fileName: "pysten_output.png",
+        skipIfExists: false,
+      );
+      _showToast(context, result.toString());
+      print(_finalImage!.path);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // This method is rerun every time setState is called
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: .center,
+          children: [
+            ElevatedButton(
+              onPressed: _pickSecret,
+              child: _secretImage == null
+                  ? Text("Upload Secret Image")
+                  : Text("Secret Image Selected!"),
+            ),
+            ElevatedButton(
+              onPressed: _pickPublic,
+              child: _publicImage == null
+                  ? Text("Upload Public Image")
+                  : Text("Public Image Selected!"),
+            ),
+            if (_secretImage != null && _publicImage != null && !_isGenerating)
+              ElevatedButton(
+                onPressed: () {
+                  _genImage(context);
+                },
+                child: Text("Generate Image"),
+              ),
+            if (_finalImage != null)
+              ElevatedButton(
+                onPressed: () {
+                  _downloadFile(context);
+                },
+                child: Text("Download Image"),
+              ),
+            SizedBox(height: 25),
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, "/");
+              },
+              child: Text("Return to homescreen"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
