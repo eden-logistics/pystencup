@@ -1,5 +1,6 @@
 from PIL import Image
 import os
+from pathlib import Path
 
 # brings each pixel from 0-255 to 0-3, in preparation for encoding
 # // performs integer division, effectively chopping off any decimals
@@ -34,11 +35,11 @@ def binextract(value):
     return int(secretvalue, 2)          # returns the last two bits as an integer
 
 def encode(publicImageFilename, privateImageFilename):
-    publicImage = Image.open(publicImageFilename)
-    privateImage = Image.open(privateImageFilename)
+    publicImage = Image.open(publicImageFilename).convert("RGB")
+    privateImage = Image.open(privateImageFilename).convert("RGB")
 
-    publicImageData = publicImage.get_flattened_data()
-    privateImageData = privateImage.get_flattened_data()
+    publicImageData = publicImage.getdata()
+    privateImageData = privateImage.getdata()
 
     privateDowngrade = downgrade_color_depth(privateImageData)
     encodedImageData = []
@@ -60,7 +61,7 @@ def decode(secretImageFilename):
     normalizeCoeff = 85
 
     secretImage = Image.open(secretImageFilename)
-    secretImageData = secretImage.get_flattened_data()
+    secretImageData = secretImage.getdata()
     decodedImageData = []
 
     for i in range(len(secretImageData)):
@@ -85,9 +86,12 @@ mode = os.getenv("MODE")
 # encoding mode
 if mode == "e":
     encodedImage = encode(pubImagePath, secImagePath)
-    encodedImage.save(pubImagePath+"_pysten")
+    encodedImage.save("pysten_output.png")
 
 # decoding mode
 if mode == "d":
-    decodedImage = decode(decImagePath)
-    decodedImage.save(decImagePath+"_decoded")
+    try:
+        decodedImage = decode(decImagePath)
+    except Exception as e:
+        print(e)
+    decodedImage.save("pysten_decode.png")
