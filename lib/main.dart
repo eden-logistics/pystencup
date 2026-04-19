@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:saver_gallery/saver_gallery.dart';
+import 'package:file_picker/file_picker.dart';
 
 // void main() {
 //   runApp(const MyApp());
@@ -21,6 +22,8 @@ void main() {
         '/': (context) => const HomePage(),
         '/image_to_image_encode': (context) => const MyApp(),
         '/image_to_image_decode': (context) => const ImageDecode(),
+        '/audio_to_image_encode': (context) => const AudioEncode(),
+        '/audio_to_image_decode': (context) => const AudioDecode(),
       },
     ),
   ); //MaterialApp
@@ -56,21 +59,16 @@ class HomePage extends StatelessWidget {
             ),
             SizedBox(height: 25.0),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushNamed(context, '/audio_to_image_encode');
+              },
               child: const Text("Audio > Image Encoding"),
             ),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushNamed(context, '/audio_to_image_decode');
+              },
               child: const Text("Audio > Image Decoding"),
-            ),
-            SizedBox(height: 25.0),
-            ElevatedButton(
-              onPressed: () {},
-              child: const Text("Text > Image Encoding"),
-            ),
-            ElevatedButton(
-              onPressed: () {},
-              child: const Text("Text > Image Decoding"),
             ),
           ],
         ),
@@ -234,7 +232,7 @@ class _MyHomePageState extends State<MyHomePage> {
             SizedBox(height: 25),
             TextButton(
               onPressed: () {
-                Navigator.pushNamed(context, "/");
+                Navigator.pop(context);
               },
               child: Text("Return to homescreen"),
             ),
@@ -370,7 +368,7 @@ class _ImageDecodePageState extends State<ImageDecodePage> {
             SizedBox(height: 25),
             TextButton(
               onPressed: () {
-                Navigator.pushNamed(context, "/");
+                Navigator.pop(context);
               },
               child: Text("Return to homescreen"),
             ),
@@ -384,8 +382,8 @@ class _ImageDecodePageState extends State<ImageDecodePage> {
 // ---------------------------
 // AUDIO TO IMAGE ENCODE PAGE
 // ---------------------------
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AudioEncode extends StatelessWidget {
+  const AudioEncode({super.key});
 
   // This widget is the root of your application.
   @override
@@ -393,24 +391,23 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Steganography Tool',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const MyHomePage(title: 'Image > Image Encoding'),
+      home: const AudioEncodePage(title: 'Image > Image Encoding'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class AudioEncodePage extends StatefulWidget {
+  const AudioEncodePage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<AudioEncodePage> createState() => _AudioEncodePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _AudioEncodePageState extends State<AudioEncodePage> {
   // image picker vars
-  File? _image;
-  File? _secretImage;
+  File? _secretFile;
   File? _publicImage;
   File? _finalImage;
   final _picker = ImagePicker();
@@ -418,10 +415,12 @@ class _MyHomePageState extends State<MyHomePage> {
   // var for removing the generate button while the image is baking
   var _isGenerating = false;
 
-  // function to select secret image
+  // function to select secret file
   void _pickSecret() async {
-    _secretImage = await _pickImage();
-    setState(() {});
+    FilePickerResult? result = await FilePicker.pickFiles();
+    if (result != null) {
+      _secretFile = File(result.files.single.path!);
+    }
   }
 
   // function to select public image
@@ -437,37 +436,26 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _genImage(BuildContext context) async {
-    // image objects, just using them to check that the resolution is the same
-    final pubObject = await decodeImageFromList(
-      _publicImage!.readAsBytesSync(),
+    // todo: check to make sure the file fits first
+    _isGenerating = true;
+    _finalImage = null;
+    setState(() {});
+    var result = await SeriousPython.run(
+      "app/app.zip",
+      appFileName: "Audio_embedder/audiosten.py",
+      environmentVariables: {
+        "IMAGE_PATH": _publicImage!.path,
+        "AUDIO_PATH": _secretFile!.path,
+        "DECODE_PATH": "",
+        "MODE": "e",
+      },
     );
-    final secObject = await decodeImageFromList(
-      _secretImage!.readAsBytesSync(),
+    _isGenerating = false;
+    _finalImage = File(
+      "/data/data/com.example.pystencup/files/flet/app/Audio_embedder/pysten_output.png",
     );
-    // check that images are the same resolution
-    if (pubObject.width != secObject.width ||
-        pubObject.height != secObject.height) {
-      _showToast(context, "Error: Images must be the same resolution");
-    } else {
-      _isGenerating = true;
-      _finalImage = null;
-      setState(() {});
-      await SeriousPython.run(
-        "app/app.zip",
-        appFileName: "Image_embedder/imagesten.py",
-        environmentVariables: {
-          "PUBLIC_IMAGE_PATH": _publicImage!.path,
-          "SECRET_IMAGE_PATH": _secretImage!.path,
-          "DECODE_IMAGE_PATH": "",
-          "MODE": "e",
-        },
-      );
-      _isGenerating = false;
-      _finalImage = File(
-        "/data/data/com.example.pystencup/files/flet/app/Image_embedder/pysten_output.png",
-      );
-      setState(() {});
-    }
+    _showToast(context, result!);
+    setState(() {});
   }
 
   void _showToast(BuildContext context, String text) {
@@ -509,9 +497,9 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             ElevatedButton(
               onPressed: _pickSecret,
-              child: _secretImage == null
-                  ? Text("Upload Secret Image")
-                  : Text("Secret Image Selected!"),
+              child: _secretFile == null
+                  ? Text("Upload Secret File")
+                  : Text("Secret File Selected!"),
             ),
             ElevatedButton(
               onPressed: _pickPublic,
@@ -519,7 +507,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ? Text("Upload Public Image")
                   : Text("Public Image Selected!"),
             ),
-            if (_secretImage != null && _publicImage != null && !_isGenerating)
+            if (_secretFile != null && _publicImage != null && !_isGenerating)
               ElevatedButton(
                 onPressed: () {
                   _genImage(context);
@@ -536,7 +524,7 @@ class _MyHomePageState extends State<MyHomePage> {
             SizedBox(height: 25),
             TextButton(
               onPressed: () {
-                Navigator.pushNamed(context, "/");
+                Navigator.pop(context);
               },
               child: Text("Return to homescreen"),
             ),
@@ -550,8 +538,8 @@ class _MyHomePageState extends State<MyHomePage> {
 // ---------------------------
 // AUDIO TO IMAGE DECODE PAGE
 // ---------------------------
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AudioDecode extends StatelessWidget {
+  const AudioDecode({super.key});
 
   // This widget is the root of your application.
   @override
@@ -559,40 +547,32 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Steganography Tool',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const MyHomePage(title: 'Image > Image Encoding'),
+      home: const AudioDecodePage(title: 'File > Image Decoding'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class AudioDecodePage extends StatefulWidget {
+  const AudioDecodePage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<AudioDecodePage> createState() => _AudioDecodePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _AudioDecodePageState extends State<AudioDecodePage> {
   // image picker vars
-  File? _image;
-  File? _secretImage;
-  File? _publicImage;
-  File? _finalImage;
+  File? _inputImage;
+  File? _outputFile;
   final _picker = ImagePicker();
 
   // var for removing the generate button while the image is baking
   var _isGenerating = false;
 
-  // function to select secret image
-  void _pickSecret() async {
-    _secretImage = await _pickImage();
-    setState(() {});
-  }
-
   // function to select public image
-  void _pickPublic() async {
-    _publicImage = await _pickImage();
+  void _pickInputImage() async {
+    _inputImage = await _pickImage();
     setState(() {});
   }
 
@@ -603,37 +583,25 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _genImage(BuildContext context) async {
-    // image objects, just using them to check that the resolution is the same
-    final pubObject = await decodeImageFromList(
-      _publicImage!.readAsBytesSync(),
+    _isGenerating = true;
+    _outputFile = null;
+    setState(() {});
+    await SeriousPython.run(
+      "app/app.zip",
+      appFileName: "Audio_embedder/audiosten.py",
+      environmentVariables: {
+        "IMAGE_PATH": "",
+        "AUDIO_PATH": "",
+        "DECODE_PATH": _inputImage!.path,
+        "MODE": "d",
+      },
     );
-    final secObject = await decodeImageFromList(
-      _secretImage!.readAsBytesSync(),
+    _isGenerating = false;
+    // todo: this needs to point to the correct file
+    _outputFile = File(
+      "/data/data/com.example.pystencup/files/flet/app/Image_embedder/pysten_output.png",
     );
-    // check that images are the same resolution
-    if (pubObject.width != secObject.width ||
-        pubObject.height != secObject.height) {
-      _showToast(context, "Error: Images must be the same resolution");
-    } else {
-      _isGenerating = true;
-      _finalImage = null;
-      setState(() {});
-      await SeriousPython.run(
-        "app/app.zip",
-        appFileName: "Image_embedder/imagesten.py",
-        environmentVariables: {
-          "PUBLIC_IMAGE_PATH": _publicImage!.path,
-          "SECRET_IMAGE_PATH": _secretImage!.path,
-          "DECODE_IMAGE_PATH": "",
-          "MODE": "e",
-        },
-      );
-      _isGenerating = false;
-      _finalImage = File(
-        "/data/data/com.example.pystencup/files/flet/app/Image_embedder/pysten_output.png",
-      );
-      setState(() {});
-    }
+    setState(() {});
   }
 
   void _showToast(BuildContext context, String text) {
@@ -649,16 +617,9 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _downloadFile(context) async {
-    if (_finalImage != null) {
-      final result = await SaverGallery.saveFile(
-        filePath: _finalImage!.path,
-        fileName: "pysten_output.png",
-        skipIfExists: false,
-      );
-      _showToast(context, result.toString());
-      print(_finalImage!.path);
-    }
+  void _downloadFile() async {
+    var downloadPath = await getDownloadsDirectory();
+    _outputFile!.copy(downloadPath!.path);
   }
 
   @override
@@ -674,35 +635,27 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: .center,
           children: [
             ElevatedButton(
-              onPressed: _pickSecret,
-              child: _secretImage == null
-                  ? Text("Upload Secret Image")
-                  : Text("Secret Image Selected!"),
+              onPressed: _pickInputImage,
+              child: _inputImage == null
+                  ? Text("Upload Image")
+                  : Text("Image Selected!"),
             ),
-            ElevatedButton(
-              onPressed: _pickPublic,
-              child: _publicImage == null
-                  ? Text("Upload Public Image")
-                  : Text("Public Image Selected!"),
-            ),
-            if (_secretImage != null && _publicImage != null && !_isGenerating)
+            if (_inputImage != null && !_isGenerating)
               ElevatedButton(
                 onPressed: () {
                   _genImage(context);
                 },
                 child: Text("Generate Image"),
               ),
-            if (_finalImage != null)
+            if (_outputFile != null)
               ElevatedButton(
-                onPressed: () {
-                  _downloadFile(context);
-                },
-                child: Text("Download Image"),
+                onPressed: _downloadFile,
+                child: Text("Download Output"),
               ),
             SizedBox(height: 25),
             TextButton(
               onPressed: () {
-                Navigator.pushNamed(context, "/");
+                Navigator.pop(context);
               },
               child: Text("Return to homescreen"),
             ),

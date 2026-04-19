@@ -9,10 +9,16 @@ mode = os.getenv("MODE")
 
 # encoding mode
 if mode == "e":
-    audiosten.encode(imagePath, "pysten_output.png", audioPath)
-    print("saved image to "+os.getcwd())
+    try:
+        audiosten.encode(imagePath, "pysten_output.png", audioPath)
+        print("saved image to "+os.getcwd())
+    except Exception as e:
+        print(e)
 
 # decoding mode
 if mode == "d":
-    path = audiosten.decode(decodePath)
-    print("saved audio to " + path)
+    try: 
+        path = audiosten.decode(decodePath, output_audio_path="output/outputFile")
+        print("saved audio to " + path)
+    except Exception as e:
+        print(e)

@@ -48,6 +48,9 @@ dependencies:
   # used for saving images to the gallery
   saver_gallery: ^4.1.1
 
+  # used for picking files
+  file_picker: ^11.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
