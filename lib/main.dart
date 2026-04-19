@@ -231,9 +231,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Text("Download Image"),
               ),
             SizedBox(height: 25),
+            // I think this change below fixed out black home screen issue
+            // Change was applied to all pages
+            // - Sean
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/', (route) => false);
               },
               child: Text("Return to homescreen"),
             ),
@@ -369,7 +372,7 @@ class _ImageDecodePageState extends State<ImageDecodePage> {
             SizedBox(height: 25),
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/', (route) => false);
               },
               child: Text("Return to homescreen"),
             ),
@@ -524,7 +527,7 @@ class _AudioEncodePageState extends State<AudioEncodePage> {
             SizedBox(height: 25),
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/', (route) => false);
               },
               child: Text("Return to homescreen"),
             ),
@@ -667,7 +670,7 @@ class _AudioDecodePageState extends State<AudioDecodePage> {
             SizedBox(height: 25),
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/', (route) => false);
               },
               child: Text("Return to homescreen"),
             ),
