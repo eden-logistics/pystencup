@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:saver_gallery/saver_gallery.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart';
 
 // void main() {
 //   runApp(const MyApp());
@@ -421,6 +422,7 @@ class _AudioEncodePageState extends State<AudioEncodePage> {
     if (result != null) {
       _secretFile = File(result.files.single.path!);
     }
+    setState(() {});
   }
 
   // function to select public image
@@ -436,13 +438,12 @@ class _AudioEncodePageState extends State<AudioEncodePage> {
   }
 
   void _genImage(BuildContext context) async {
-    // todo: check to make sure the file fits first
     _isGenerating = true;
     _finalImage = null;
     setState(() {});
     var result = await SeriousPython.run(
       "app/app.zip",
-      appFileName: "Audio_embedder/audiosten.py",
+      appFileName: "Audio_embeder/audiosten.py",
       environmentVariables: {
         "IMAGE_PATH": _publicImage!.path,
         "AUDIO_PATH": _secretFile!.path,
@@ -452,9 +453,9 @@ class _AudioEncodePageState extends State<AudioEncodePage> {
     );
     _isGenerating = false;
     _finalImage = File(
-      "/data/data/com.example.pystencup/files/flet/app/Audio_embedder/pysten_output.png",
+      "/data/data/com.example.pystencup/files/flet/app/Audio_embeder/pysten_output.png",
     );
-    _showToast(context, result!);
+    _showToast(context, "${_finalImage!.existsSync()}");
     setState(() {});
   }
 
@@ -479,7 +480,6 @@ class _AudioEncodePageState extends State<AudioEncodePage> {
         skipIfExists: false,
       );
       _showToast(context, result.toString());
-      print(_finalImage!.path);
     }
   }
 
@@ -566,6 +566,7 @@ class _AudioDecodePageState extends State<AudioDecodePage> {
   File? _inputImage;
   File? _outputFile;
   final _picker = ImagePicker();
+  final downloadPath = "/storage/emulated/0/Download";
 
   // var for removing the generate button while the image is baking
   var _isGenerating = false;
@@ -588,7 +589,7 @@ class _AudioDecodePageState extends State<AudioDecodePage> {
     setState(() {});
     await SeriousPython.run(
       "app/app.zip",
-      appFileName: "Audio_embedder/audiosten.py",
+      appFileName: "Audio_embeder/audiosten.py",
       environmentVariables: {
         "IMAGE_PATH": "",
         "AUDIO_PATH": "",
@@ -597,10 +598,11 @@ class _AudioDecodePageState extends State<AudioDecodePage> {
       },
     );
     _isGenerating = false;
-    // todo: this needs to point to the correct file
-    _outputFile = File(
-      "/data/data/com.example.pystencup/files/flet/app/Image_embedder/pysten_output.png",
+    var outputFolder = Directory(
+      "/data/data/com.example.pystencup/files/flet/app/Audio_embeder/output",
     );
+    _outputFile = File(outputFolder.listSync()[0].path);
+    print("${_outputFile!.existsSync()}");
     setState(() {});
   }
 
@@ -618,8 +620,18 @@ class _AudioDecodePageState extends State<AudioDecodePage> {
   }
 
   void _downloadFile() async {
-    var downloadPath = await getDownloadsDirectory();
-    _outputFile!.copy(downloadPath!.path);
+    // check if file exists first
+    var downloadTarget = "$downloadPath/${basename(_outputFile!.path)}";
+    File? existingFile = File(downloadTarget);
+    var iter = 0;
+    // keep trying new names until we get a unique one
+    while (existingFile!.existsSync()) {
+      iter++;
+      downloadTarget = "$downloadPath/($iter) ${basename(_outputFile!.path)}";
+      existingFile = File(downloadTarget);
+    }
+    var result = await _outputFile!.copy(downloadTarget);
+    print(result.path);
   }
 
   @override
@@ -645,7 +657,7 @@ class _AudioDecodePageState extends State<AudioDecodePage> {
                 onPressed: () {
                   _genImage(context);
                 },
-                child: Text("Generate Image"),
+                child: Text("Decode Image"),
               ),
             if (_outputFile != null)
               ElevatedButton(

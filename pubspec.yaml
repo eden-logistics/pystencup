@@ -51,6 +51,9 @@ dependencies:
   # used for picking files
   file_picker: ^11.0.2
 
+  # used for getting filenames
+  path: ^1.9.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
