@@ -236,7 +236,10 @@ class _MyHomePageState extends State<MyHomePage> {
             // - Sean
             TextButton(
               onPressed: () {
-                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/', (route) => false);
+                Navigator.of(
+                  context,
+                  rootNavigator: true,
+                ).pushNamedAndRemoveUntil('/', (route) => false);
               },
               child: Text("Return to homescreen"),
             ),
@@ -372,7 +375,10 @@ class _ImageDecodePageState extends State<ImageDecodePage> {
             SizedBox(height: 25),
             TextButton(
               onPressed: () {
-                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/', (route) => false);
+                Navigator.of(
+                  context,
+                  rootNavigator: true,
+                ).pushNamedAndRemoveUntil('/', (route) => false);
               },
               child: Text("Return to homescreen"),
             ),
@@ -527,7 +533,10 @@ class _AudioEncodePageState extends State<AudioEncodePage> {
             SizedBox(height: 25),
             TextButton(
               onPressed: () {
-                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/', (route) => false);
+                Navigator.of(
+                  context,
+                  rootNavigator: true,
+                ).pushNamedAndRemoveUntil('/', (route) => false);
               },
               child: Text("Return to homescreen"),
             ),
@@ -670,7 +679,10 @@ class _AudioDecodePageState extends State<AudioDecodePage> {
             SizedBox(height: 25),
             TextButton(
               onPressed: () {
-                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/', (route) => false);
+                Navigator.of(
+                  context,
+                  rootNavigator: true,
+                ).pushNamedAndRemoveUntil('/', (route) => false);
               },
               child: Text("Return to homescreen"),
             ),
