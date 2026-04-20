@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:saver_gallery/saver_gallery.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart';
+import 'package:flutter/services.dart';
 
 // void main() {
 //   runApp(const MyApp());
@@ -25,6 +26,8 @@ void main() {
         '/image_to_image_decode': (context) => const ImageDecode(),
         '/audio_to_image_encode': (context) => const AudioEncode(),
         '/audio_to_image_decode': (context) => const AudioDecode(),
+        '/text_to_text_encode': (context) => const TextEncode(),
+        '/text_to_text_decode': (context) => const TextDecode(),
       },
     ),
   ); //MaterialApp
@@ -70,6 +73,19 @@ class HomePage extends StatelessWidget {
                 Navigator.pushNamed(context, '/audio_to_image_decode');
               },
               child: const Text("Audio > Image Decoding"),
+            ),
+            SizedBox(height: 25.0),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/text_to_text_encode');
+              },
+              child: const Text("Text > Text Encoding"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/text_to_text_decode');
+              },
+              child: const Text("Text > Text Decoding"),
             ),
           ],
         ),
@@ -675,6 +691,345 @@ class _AudioDecodePageState extends State<AudioDecodePage> {
               ElevatedButton(
                 onPressed: _downloadFile,
                 child: Text("Download Output"),
+              ),
+            SizedBox(height: 25),
+            TextButton(
+              onPressed: () {
+                Navigator.of(
+                  context,
+                  rootNavigator: true,
+                ).pushNamedAndRemoveUntil('/', (route) => false);
+              },
+              child: Text("Return to homescreen"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------
+// TEXT TO TEXT ENCODE PAGE
+// ---------------------------
+class TextEncode extends StatelessWidget {
+  const TextEncode({super.key});
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Steganography Tool',
+      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      home: const TextEncodePage(title: 'Text > Text Encoding'),
+    );
+  }
+}
+
+class TextEncodePage extends StatefulWidget {
+  const TextEncodePage({super.key, required this.title});
+
+  final String title;
+
+  @override
+  State<TextEncodePage> createState() => _TextEncodePageState();
+}
+
+class _TextEncodePageState extends State<TextEncodePage> {
+  late TextEditingController _coverController;
+  late TextEditingController _secretController;
+
+  @override
+  void initState() {
+    super.initState();
+    _coverController = TextEditingController();
+    _secretController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _coverController.dispose();
+    _secretController.dispose();
+    super.dispose();
+  }
+
+  String? _coverText;
+  String? _secretText;
+  String? _outputText;
+  final _outputTextFile = File(
+    "/data/data/com.example.pystencup/files/flet/app/Text_embedder/outputFile.txt",
+  );
+
+  final downloadPath = "/storage/emulated/0/Download";
+
+  // var for removing the generate button while the image is baking
+  var _isGenerating = false;
+
+  void _genText(BuildContext context) async {
+    if (_outputTextFile.existsSync()) {
+      _outputTextFile.deleteSync();
+    }
+    _outputTextFile.createSync(recursive: true);
+    print(_outputTextFile.path);
+    print(_outputTextFile.existsSync());
+    _isGenerating = true;
+    _outputText = null;
+    setState(() {});
+    var result = await SeriousPython.run(
+      "app/app.zip",
+      appFileName: "Text_embedder/textsten.py",
+      environmentVariables: {
+        "PUBLIC_TEXT": _coverText!,
+        "SECRET_TEXT": _secretText!,
+        "INPUT_TEXT": "",
+        "INPUT_TEXT_FILE": "",
+        "MODE": "e",
+      },
+    );
+    _isGenerating = false;
+    print(_outputTextFile.existsSync());
+    _outputText = _outputTextFile.readAsStringSync();
+    print(_outputText);
+    setState(() {});
+  }
+
+  void _downloadFile() async {
+    // check if file exists first
+    var downloadTarget = "$downloadPath/${basename(_outputTextFile.path)}";
+    File? existingFile = File(downloadTarget);
+    var iter = 0;
+    // keep trying new names until we get a unique one
+    while (existingFile!.existsSync()) {
+      iter++;
+      downloadTarget =
+          "$downloadPath/($iter) ${basename(_outputTextFile.path)}";
+      existingFile = File(downloadTarget);
+    }
+    var result = await _outputTextFile.copy(downloadTarget);
+    print(result.path);
+  }
+
+  void _showToast(BuildContext context, String text) {
+    final scaffold = ScaffoldMessenger.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(text),
+        action: SnackBarAction(
+          label: 'Close',
+          onPressed: scaffold.hideCurrentSnackBar,
+        ),
+      ),
+    );
+  }
+
+  void _copyToClipboard() async {
+    await Clipboard.setData(ClipboardData(text: _outputText!));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // This method is rerun every time setState is called
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: .center,
+          children: [
+            Text("Input Cover Text:"),
+            TextField(
+              controller: _coverController,
+              onSubmitted: (String value) {
+                _coverText = value;
+                setState(() {});
+              },
+              textAlign: TextAlign.center,
+            ),
+            Text("Input Secret Text:"),
+            TextField(
+              controller: _secretController,
+              onSubmitted: (String value) {
+                _secretText = value;
+                setState(() {});
+              },
+              textAlign: TextAlign.center,
+            ),
+            if (_coverText != null && _secretText != null && !_isGenerating)
+              ElevatedButton(
+                onPressed: () {
+                  _genText(context);
+                },
+                child: Text("Generate hidden text!"),
+              ),
+            // if (_outputText != null)
+            //   ElevatedButton(
+            //     onPressed: _copyToClipboard,
+            //     child: Text("Copy output to clipboard"),
+            //   ),
+            if (_outputText != null)
+              ElevatedButton(
+                onPressed: _downloadFile,
+                child: Text("Save output as .txt file"),
+              ),
+            SizedBox(height: 25),
+            TextButton(
+              onPressed: () {
+                Navigator.of(
+                  context,
+                  rootNavigator: true,
+                ).pushNamedAndRemoveUntil('/', (route) => false);
+              },
+              child: Text("Return to homescreen"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------
+// TEXT TO TEXT DECODE PAGE
+// ---------------------------
+class TextDecode extends StatelessWidget {
+  const TextDecode({super.key});
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Steganography Tool',
+      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      home: const TextDecodePage(title: 'Text > Text Encoding'),
+    );
+  }
+}
+
+class TextDecodePage extends StatefulWidget {
+  const TextDecodePage({super.key, required this.title});
+
+  final String title;
+
+  @override
+  State<TextDecodePage> createState() => _TextDecodePageState();
+}
+
+class _TextDecodePageState extends State<TextDecodePage> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String? _inputText;
+  String? _outputText;
+  File? _inputTextFile;
+  File? _outputTextFile;
+
+  final downloadPath = "/storage/emulated/0/Download";
+
+  // var for removing the generate button while the image is baking
+  var _isGenerating = false;
+
+  void _pickFile() async {
+    FilePickerResult? result = await FilePicker.pickFiles(
+      // type: FileType.custom,
+      // allowedExtensions: ["txt"],
+    );
+    if (result != null) {
+      _inputTextFile = File(result.files.single.path!);
+    }
+    setState(() {});
+  }
+
+  void _genText(BuildContext context) async {
+    _isGenerating = true;
+    _outputText = null;
+    setState(() {});
+    var result = await SeriousPython.run(
+      "app/app.zip",
+      appFileName: "Text_embedder/textsten.py",
+      environmentVariables: {
+        "PUBLIC_TEXT": "",
+        "SECRET_TEXT": "",
+        "INPUT_TEXT": _inputText == null ? "" : _inputText!,
+        "INPUT_TEXT_FILE": _inputTextFile == null ? "" : _inputTextFile!.path,
+        "MODE": "d",
+      },
+    );
+    _isGenerating = false;
+    _outputTextFile = File(
+      "/data/data/com.example.pystencup/files/flet/app/Text_embedder/outputFile.txt",
+    );
+    _outputText = _outputTextFile!.readAsStringSync();
+    print(_outputText);
+    setState(() {});
+  }
+
+  void _showToast(BuildContext context, String text) {
+    final scaffold = ScaffoldMessenger.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(text),
+        action: SnackBarAction(
+          label: 'Close',
+          onPressed: scaffold.hideCurrentSnackBar,
+        ),
+      ),
+    );
+  }
+
+  void _copyToClipboard() async {
+    await Clipboard.setData(ClipboardData(text: _outputText!));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // This method is rerun every time setState is called
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: .center,
+          children: [
+            // Text("Input Text:"),
+            // TextField(
+            //   controller: _controller,
+            //   onSubmitted: (String value) {
+            //     _inputText = value;
+            //     setState(() {});
+            //   },
+            // ),
+            ElevatedButton(
+              onPressed: _pickFile,
+              child: Text("Pick a txt file"),
+            ),
+            if ((_inputText != null || _inputTextFile != null) &&
+                !_isGenerating)
+              ElevatedButton(
+                onPressed: () {
+                  _genText(context);
+                },
+                child: Text("Decode text!"),
+              ),
+            if (_outputText != null) Text(_outputText!),
+            if (_outputText != null)
+              ElevatedButton(
+                onPressed: _copyToClipboard,
+                child: Text("Copy output to clipboard"),
               ),
             SizedBox(height: 25),
             TextButton(
