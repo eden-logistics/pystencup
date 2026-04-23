@@ -66,13 +66,13 @@ class HomePage extends StatelessWidget {
               onPressed: () {
                 Navigator.pushNamed(context, '/audio_to_image_encode');
               },
-              child: const Text("Audio > Image Encoding"),
+              child: const Text("File > Image Encoding"),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pushNamed(context, '/audio_to_image_decode');
               },
-              child: const Text("Audio > Image Decoding"),
+              child: const Text("File > Image Decoding"),
             ),
             SizedBox(height: 25.0),
             ElevatedButton(
@@ -417,7 +417,7 @@ class AudioEncode extends StatelessWidget {
     return MaterialApp(
       title: 'Steganography Tool',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const AudioEncodePage(title: 'Image > Image Encoding'),
+      home: const AudioEncodePage(title: 'File > Image Encoding'),
     );
   }
 }
